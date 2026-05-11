@@ -1,26 +1,28 @@
 {
   "users": [
     {
-      "name": "Admin Owner",
+      "name": "المدير",
       "user": "admin",
       "pass": "owner2026",
       "wilaya": "البليدة",
       "uni": "جامعة البليدة 1",
       "status": "active",
       "role": "admin",
+      "isVerified": true,
+      "bio": "الحساب الرسمي للإدارة",
+      "pfp": "admin.png",
+      "followers": [],
+      "following": [],
       "joinedAt": "2026-05-11T00:00:00.000Z"
-    },
-    {
-      "name": "Sarah Ecology",
-      "user": "sarah_dz",
-      "pass": "123456",
-      "wilaya": "الجزائر",
-      "uni": "USTHB",
-      "status": "pending",
-      "role": "student",
-      "joinedAt": "2026-05-11T02:30:00.000Z"
     }
   ],
   "posts": [],
-  "banned": []
+  "busSchedules": {
+    "البليدة": "08:00",
+    "الجزائر": "07:30",
+    "تيبازة": "07:45",
+    "المدية": "08:15",
+    "بومرداس": "07:50"
+  },
+  "reports": []
 }
