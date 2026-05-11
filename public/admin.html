@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>لوحة التحكم — الإدارة</title>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Space+Mono&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #050505;
+      --bg-card: #0e0e0b;
+      --gold: #c9a84c;
+      --red: #ff4444;
+      --green: #4ca87a;
+      --border: rgba(201, 168, 76, 0.15);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: #f5f0e8; font-family: 'Amiri', serif; }
+
+    /* --- AUTH GATE --- */
+    #authGate {
+      position: fixed; inset: 0; background: var(--bg); z-index: 9999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .auth-box { background: var(--bg-card); padding: 40px; border: 1px solid var(--border); border-radius: 15px; text-align: center; width: 320px; }
+    .auth-input { width: 100%; padding: 12px; background: #000; border: 1px solid var(--gold); color: #fff; text-align: center; margin-bottom: 15px; border-radius: 5px; outline: none; }
+
+    /* --- DASHBOARD --- */
+    #dashboard { display: none; padding: 40px 20px; max-width: 1000px; margin: 0 auto; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+    
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px; }
+    .stat-card { background: var(--bg-card); padding: 20px; border: 1px solid var(--border); border-radius: 12px; text-align: center; }
+    .stat-val { font-family: 'Space Mono'; font-size: 2rem; color: var(--gold); display: block; }
+
+    .admin-section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .section-title { padding: 15px 20px; background: rgba(201, 168, 76, 0.05); border-bottom: 1px solid var(--border); font-weight: bold; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: right; padding: 15px; color: var(--gold); border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
+
+    .btn { padding: 6px 15px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; font-family: 'Amiri'; }
+    .btn-approve { background: var(--green); color: #fff; }
+    .btn-ban { background: var(--red); color: #fff; margin-right: 5px; }
+  </style>
+</head>
+<body>
+
+<div id="authGate">
+    <div class="auth-box">
+        <h2 style="color:var(--gold); margin-bottom:10px;">إدارة المنصة</h2>
+        <input type="password" id="adminPass" class="auth-input" placeholder="كلمة المرور">
+        <button class="btn" style="background:var(--gold); width:100%; padding:10px;" onclick="checkAccess()">دخول</button>
+    </div>
+</div>
+
+<div id="dashboard">
+    <header>
+        <h1>لوحة التحكم <span style="font-size:0.9rem; color:var(--gold);">Owner Mode</span></h1>
+        <button class="btn" style="background:transparent; border:1px solid #444; color:#888" onclick="location.href='feed.html'">العودة للموقع</button>
+    </header>
+
+    <div class="stats-grid">
+        <div class="stat-card">المستخدمين<span class="stat-val" id="statUsers">0</span></div>
+        <div class="stat-card">بانتظار التفعيل<span class="stat-val" id="statPending" style="color:#f09433">0</span></div>
+    </div>
+
+    <div class="admin-section">
+        <div class="section-title">طلبات التفعيل</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>اسم الطالب</th>
+                    <th>رقم البطاقة / البكالوريا</th>
+                    <th>الإجراء</th>
+                </tr>
+            </thead>
+            <tbody id="userTable">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    async function checkAccess() {
+        const pass = document.getElementById('adminPass').value;
+        // Matches the owner2026 password in server.js
+        if (pass === "owner2026") {
+            document.getElementById('authGate').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            loadAdminData();
+        } else {
+            alert("كلمة مرور خاطئة");
+        }
+    }
+
+    async function loadAdminData() {
+        const res = await fetch('/api/admin/data');
+        const data = await res.json();
+        
+        document.getElementById('statUsers').innerText = data.users.length;
+        document.getElementById('statPending').innerText = data.users.filter(u => u.status === 'pending').length;
+
+        const table = document.getElementById('userTable');
+        const pending = data.users.filter(u => u.status === 'pending');
+
+        if(pending.length === 0) {
+            table.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:40px; color:#666;">لا توجد طلبات حالياً</td></tr>`;
+            return;
+        }
+
+        table.innerHTML = pending.map(u => `
+            <tr>
+                <td><b>${u.name}</b> (@${u.user})</td>
+                <td style="font-family:'Space Mono';">ID: ${u.info.card}<br>BAC: ${u.info.bac}</td>
+                <td>
+                    <button class="btn btn-approve" onclick="approveUser('${u.user}')">تفعيل</button>
+                    <button class="btn btn-ban" onclick="banUser('${u.user}')">حظر</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function approveUser(username) {
+        await fetch('/api/admin/approve', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ targetUser: username })
+        });
+        loadAdminData();
+    }
+
+    async function banUser(username) {
+        if(!confirm("حظر الطالب؟")) return;
+        await fetch('/api/admin/ban', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ targetUser: username })
+        });
+        loadAdminData();
+    }
+</script>
+</body>
+</html>
