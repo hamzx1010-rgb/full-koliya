@@ -9,129 +9,96 @@ app.use(express.static('public'));
 
 const DB_FILE = './db.json';
 
-// --- Database Helpers ---
+// --- Database Logic ---
 const readDB = () => {
     try {
         const data = fs.readFileSync(DB_FILE, 'utf8');
         return JSON.parse(data);
     } catch (err) {
-        // Return default structure if file is missing or corrupt
+        // Fallback structure if db.json is corrupted or empty
         return { users: [], posts: [], banned: [] };
     }
 };
 
-const writeDB = (data) => {
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
-};
+const writeDB = (data) => fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
 
-// --- Authentication Routes ---
+// --- Auth Endpoints ---
 
-// 1. Registration (Updated for Wilaya & Uni)
+// Registration with new Wilaya/Uni fields
 app.post('/api/register', (req, res) => {
     const { name, user, pass, wilaya, uni } = req.body;
     const db = readDB();
 
     if (db.users.find(u => u.user === user)) {
-        return res.json({ success: false, message: "اسم المستخدم محجوز بالفعل" });
+        return res.json({ success: false, message: "اسم المستخدم موجود مسبقاً" });
     }
 
-    const newUser = {
+    db.users.push({
         name,
         user,
         pass,
         wilaya,
         uni,
-        status: 'pending', // Requires admin approval
+        status: 'pending', // Default status for new signups
         role: 'student',
         joinedAt: new Date().toISOString()
-    };
+    });
 
-    db.users.push(newUser);
     writeDB(db);
-    res.json({ success: true, message: "تم إرسال طلبك للإدارة" });
+    res.json({ success: true });
 });
 
-// 2. Login (Fixes "Undefined" by sending full profile)
+// Login - Sends profile data to prevent "Undefined" errors in Feed
 app.post('/api/login', (req, res) => {
     const { user, pass } = req.body;
     const db = readDB();
-
     const found = db.users.find(u => u.user === user && u.pass === pass);
 
-    if (!found) {
-        return res.json({ success: false, message: "بيانات الدخول غير صحيحة" });
-    }
+    if (!found) return res.json({ success: false, message: "بيانات خاطئة" });
+    if (found.status === 'pending') return res.json({ success: false, message: "حسابك قيد الانتظار" });
+    if (found.status === 'banned') return res.json({ success: false, message: "تم حظر هذا الحساب" });
 
-    if (found.status === 'pending') {
-        return res.json({ success: false, message: "حسابك لم يفعل بعد من طرف الإدارة" });
-    }
-
-    // Send data needed for colors and bus timers
     res.json({ 
         success: true, 
         user: { 
             name: found.name, 
             user: found.user, 
-            uni: found.uni,
+            uni: found.uni, 
             wilaya: found.wilaya 
         } 
     });
 });
 
-// --- Admin Operations ---
+// --- Admin Endpoints ---
 
+// Get all data for the professional dashboard
 app.get('/api/admin/data', (req, res) => {
     const db = readDB();
-    res.json({ users: db.users });
+    res.json({
+        users: db.users || [],
+        posts: db.posts || []
+    });
 });
 
+// Approve, Ban, or Reject users
 app.post('/api/admin/approve', (req, res) => {
-    const { targetUser } = req.body;
+    const { targetUser, status } = req.body;
     const db = readDB();
-    const user = db.users.find(u => u.user === targetUser);
-    
-    if (user) {
-        user.status = 'active';
+    const userIndex = db.users.findIndex(u => u.user === targetUser);
+
+    if (userIndex !== -1) {
+        if (status === 'rejected') {
+            db.users.splice(userIndex, 1); // Delete if rejected
+        } else {
+            db.users[userIndex].status = status; // 'active' or 'banned'
+        }
         writeDB(db);
-        res.json({ success: true });
+        return res.json({ success: true });
     }
+    res.status(404).json({ success: false, message: "User not found" });
 });
 
-// --- Inbox & Messaging ---
-
-app.get('/api/inbox', (req, res) => {
-    const { user, type } = req.query;
-    // type: 'chats', 'channels', or 'requests'
-    
-    // In a real app, you'd filter messages from db.json here.
-    // This matches the multi-tab UI we built.
-    const mockData = {
-        chats: [
-            { sender: "سارة", text: "هل أكملت ملخص الإيكولوجيا؟", time: "12:45" }
-        ],
-        channels: [
-            { sender: "COUS News", text: "تحديث: تم تغيير مواقيت النقل غداً", time: "10:00" }
-        ],
-        requests: []
-    };
-    
-    res.json(mockData[type] || []);
-});
-
-// --- Search System ---
-
-app.get('/api/search', (req, res) => {
-    const { q } = req.query;
-    const db = readDB();
-    const results = db.users
-        .filter(u => u.status === 'active' && (u.name.includes(q) || u.user.includes(q)))
-        .map(u => ({ name: u.name, user: u.user, uni: u.uni }));
-    
-    res.json(results);
-});
-
-// --- Initialize Server ---
+// --- Server Start ---
 app.listen(PORT, () => {
-    console.log(`Kulliya Engine running on port ${PORT}`);
-    console.log(`Admin access: /admin.html (pass: owner2026)`);
+    console.log(`Server live on port ${PORT}`);
 });
