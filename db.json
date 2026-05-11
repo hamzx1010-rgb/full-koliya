@@ -1,15 +1,24 @@
 {
   "users": [
     {
+      "name": "Admin Owner",
       "user": "admin",
       "pass": "owner2026",
-      "name": "مدير المنصة",
-      "role": "admin",
+      "wilaya": "البليدة",
+      "uni": "جامعة البليدة 1",
       "status": "active",
-      "info": {
-        "card": "0000",
-        "bac": "2026"
-      }
+      "role": "admin",
+      "joinedAt": "2026-05-11T00:00:00.000Z"
+    },
+    {
+      "name": "Sarah Ecology",
+      "user": "sarah_dz",
+      "pass": "123456",
+      "wilaya": "الجزائر",
+      "uni": "USTHB",
+      "status": "pending",
+      "role": "student",
+      "joinedAt": "2026-05-11T02:30:00.000Z"
     }
   ],
   "posts": [],
