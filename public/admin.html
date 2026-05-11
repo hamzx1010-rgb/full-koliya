@@ -14,6 +14,7 @@
       --green: #4ca87a;
       --border: rgba(201, 168, 76, 0.15);
     }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: var(--bg); color: #f5f0e8; font-family: 'Amiri', serif; }
 
@@ -21,6 +22,7 @@
     #authGate {
       position: fixed; inset: 0; background: var(--bg); z-index: 9999;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 20px;
     }
     .auth-box { background: var(--bg-card); padding: 40px; border: 1px solid var(--border); border-radius: 15px; text-align: center; width: 320px; }
     .auth-input { width: 100%; padding: 12px; background: #000; border: 1px solid var(--gold); color: #fff; text-align: center; margin-bottom: 15px; border-radius: 5px; outline: none; }
@@ -43,6 +45,9 @@
     .btn { padding: 6px 15px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; font-family: 'Amiri'; }
     .btn-approve { background: var(--green); color: #fff; }
     .btn-ban { background: var(--red); color: #fff; margin-right: 5px; }
+    
+    .status-badge { padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; border: 1px solid; }
+    .status-pending { color: #f09433; border-color: #f09433; }
   </style>
 </head>
 <body>
@@ -58,21 +63,23 @@
 <div id="dashboard">
     <header>
         <h1>لوحة التحكم <span style="font-size:0.9rem; color:var(--gold);">Owner Mode</span></h1>
-        <button class="btn" style="background:transparent; border:1px solid #444; color:#888" onclick="location.href='feed.html'">العودة للموقع</button>
+        <button class="btn" style="background:transparent; border:1px solid #444; color:#888" onclick="location.href='feed.html'">معاينة التايملاين</button>
     </header>
 
     <div class="stats-grid">
         <div class="stat-card">المستخدمين<span class="stat-val" id="statUsers">0</span></div>
         <div class="stat-card">بانتظار التفعيل<span class="stat-val" id="statPending" style="color:#f09433">0</span></div>
+        <div class="stat-card">المنشورات<span class="stat-val" id="statPosts">0</span></div>
     </div>
 
     <div class="admin-section">
-        <div class="section-title">طلبات التفعيل</div>
+        <div class="section-title">طلبات الانضمام الجديدة</div>
         <table>
             <thead>
                 <tr>
-                    <th>اسم الطالب</th>
-                    <th>رقم البطاقة / البكالوريا</th>
+                    <th>الطالب</th>
+                    <th>بيانات التحقق (Card/BAC)</th>
+                    <th>الحالة</th>
                     <th>الإجراء</th>
                 </tr>
             </thead>
@@ -85,7 +92,7 @@
 <script>
     async function checkAccess() {
         const pass = document.getElementById('adminPass').value;
-        // Matches the owner2026 password in server.js
+        // This matches the password we set in server.js
         if (pass === "owner2026") {
             document.getElementById('authGate').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
@@ -99,21 +106,27 @@
         const res = await fetch('/api/admin/data');
         const data = await res.json();
         
+        // Update Stats
         document.getElementById('statUsers').innerText = data.users.length;
         document.getElementById('statPending').innerText = data.users.filter(u => u.status === 'pending').length;
+        document.getElementById('statPosts').innerText = data.posts.length;
 
+        // Update Table
         const table = document.getElementById('userTable');
-        const pending = data.users.filter(u => u.status === 'pending');
+        const pendingUsers = data.users.filter(u => u.status === 'pending');
 
-        if(pending.length === 0) {
-            table.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:40px; color:#666;">لا توجد طلبات حالياً</td></tr>`;
+        if(pendingUsers.length === 0) {
+            table.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:40px; color:#666;">لا توجد طلبات معلقة حالياً</td></tr>`;
             return;
         }
 
-        table.innerHTML = pending.map(u => `
+        table.innerHTML = pendingUsers.map(u => `
             <tr>
-                <td><b>${u.name}</b> (@${u.user})</td>
-                <td style="font-family:'Space Mono';">ID: ${u.info.card}<br>BAC: ${u.info.bac}</td>
+                <td><b>${u.name}</b><br><span style="color:#666; font-size:0.8rem;">@${u.user}</span></td>
+                <td style="font-family:'Space Mono'; font-size:0.85rem;">
+                    ID: ${u.info.card}<br>BAC: ${u.info.bac}
+                </td>
+                <td><span class="status-badge status-pending">قيد الانتظار</span></td>
                 <td>
                     <button class="btn btn-approve" onclick="approveUser('${u.user}')">تفعيل</button>
                     <button class="btn btn-ban" onclick="banUser('${u.user}')">حظر</button>
@@ -123,23 +136,24 @@
     }
 
     async function approveUser(username) {
-        await fetch('/api/admin/approve', {
+        const res = await fetch('/api/admin/approve', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ targetUser: username })
         });
-        loadAdminData();
+        if(res.ok) loadAdminData();
     }
 
     async function banUser(username) {
-        if(!confirm("حظر الطالب؟")) return;
-        await fetch('/api/admin/ban', {
+        if(!confirm("هل أنت متأكد من حظر هذا المستخدم؟")) return;
+        const res = await fetch('/api/admin/ban', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ targetUser: username })
         });
-        loadAdminData();
+        if(res.ok) loadAdminData();
     }
 </script>
+
 </body>
 </html>
