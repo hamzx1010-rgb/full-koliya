@@ -1,17 +1,25 @@
 const https = require('https');
 
-// Replace this URL with your actual Render app URL once it is live
-const APP_URL = 'https://full-koliya.onrender.com'; 
+// This function will ping your website every 14 minutes
+// to prevent Render from putting the server to sleep.
+function keepAlive() {
+    // We use the environment variable Render provides automatically
+    const appUrl = process.env.RENDER_EXTERNAL_HOSTNAME;
 
-function reloadWebsite() {
-  https.get(APP_URL, (res) => {
-    console.log(`Keep-alive ping sent: Status Code ${res.statusCode}`);
-  }).on('error', (err) => {
-    console.error(`Keep-alive error: ${err.message}`);
-  });
+    if (!appUrl) {
+        console.log("⚠️ Keep-Alive: No RENDER_EXTERNAL_HOSTNAME found. Skipping ping.");
+        return;
+    }
+
+    const fullUrl = `https://${appUrl}`;
+
+    setInterval(() => {
+        https.get(fullUrl, (res) => {
+            console.log(`📡 Self-Ping Sent to ${fullUrl} | Status: ${res.statusCode}`);
+        }).on('error', (err) => {
+            console.error(`❌ Keep-Alive Error: ${err.message}`);
+        });
+    }, 840000); // 840,000ms = 14 minutes
 }
 
-// Pings the server every 14 minutes (840,000 milliseconds)
-setInterval(reloadWebsite, 14 * 60 * 1000);
-
-console.log("Keep-alive system initialized.");
+module.exports = keepAlive;
