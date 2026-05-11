@@ -1,136 +1,101 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const https = require('https');
 const app = express();
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.static('public'));
 
-// --- DATABASE PATH ---
-// On Render, we use /tmp or the root. 
-// Note: This file resets if you push a new update from GitHub.
-const DB_PATH = path.join(__dirname, 'db.json');
+const DB_FILE = './db.json';
 
-// --- INITIAL SEED DATA ---
-let db = { 
-    users: [
-        { user: 'admin', pass: 'owner2026', name: 'المطور', role: 'admin', status: 'active' }
-    ], 
-    posts: [],
-    banned: [] 
-};
+// Helper to read/write DB
+const readDB = () => JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+const writeDB = (data) => fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
 
-// --- LOAD DATA ON START ---
-if (fs.existsSync(DB_PATH)) {
-    try {
-        const data = fs.readFileSync(DB_PATH, 'utf8');
-        db = JSON.parse(data);
-        console.log("✅ Database Loaded");
-    } catch (e) {
-        console.log("⚠️ DB Corrupt, using defaults");
-    }
-}
-
-// --- SAVE FUNCTION ---
-const save = () => {
-    fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
-};
-
-// ==========================================
-// 1. AUTHENTICATION (Student Side)
-// ==========================================
-
+// 1. REGISTER (Updated with Wilaya and University)
 app.post('/api/register', (req, res) => {
-    const { user, pass, name, info } = req.body;
+    const { name, user, pass, wilaya, uni } = req.body;
+    const db = readDB();
+
     if (db.users.find(u => u.user === user)) {
-        return res.status(400).json({ err: 'المستخدم موجود بالفعل' });
+        return res.json({ success: false, message: "اسم المستخدم موجود مسبقاً" });
     }
-    // New students are ALWAYS 'pending'
-    db.users.push({ user, pass, name, info, status: 'pending', role: 'student' });
-    save();
+
+    // New users are 'pending' until Admin approves them
+    db.users.push({
+        name,
+        user,
+        pass,
+        wilaya,
+        uni,
+        status: 'pending', 
+        role: 'student',
+        joined: new Date().toISOString()
+    });
+
+    writeDB(db);
     res.json({ success: true });
 });
 
+// 2. LOGIN (Sends Uni and Name to fix "Undefined")
 app.post('/api/login', (req, res) => {
     const { user, pass } = req.body;
+    const db = readDB();
+
     const found = db.users.find(u => u.user === user && u.pass === pass);
-    
-    if (!found) return res.status(401).json({ err: 'خطأ في اسم المستخدم أو كلمة السر' });
-    if (db.banned.includes(user)) return res.status(403).json({ err: 'هذا الحساب محظور' });
-    if (found.status === 'pending') return res.status(403).json({ err: 'حسابك بانتظار تفعيل الإدارة' });
-    
-    res.json({ success: true, user: found });
+
+    if (!found) {
+        return res.json({ success: false, message: "خطأ في الاسم أو كلمة المرور" });
+    }
+
+    if (found.status === 'pending') {
+        return res.json({ success: false, message: "حسابك قيد المراجعة من قبل الإدارة" });
+    }
+
+    // Sending full user object so frontend can set colors and bus times
+    res.json({ 
+        success: true, 
+        user: { 
+            name: found.name, 
+            user: found.user, 
+            uni: found.uni,
+            wilaya: found.wilaya 
+        } 
+    });
 });
 
-// ==========================================
-// 2. ADMIN ACTIONS (Hidden Area)
-// ==========================================
-
-// Get all data for the Admin Dashboard
+// 3. ADMIN: GET PENDING USERS
 app.get('/api/admin/data', (req, res) => {
-    res.json({ users: db.users, posts: db.posts });
+    const db = readDB();
+    res.json({ users: db.users });
 });
 
-// Approve a student
+// 4. ADMIN: APPROVE USER
 app.post('/api/admin/approve', (req, res) => {
     const { targetUser } = req.body;
-    const user = db.users.find(u => u.user === targetUser);
-    if (user) {
-        user.status = 'active';
-        save();
+    const db = readDB();
+    const userIdx = db.users.findIndex(u => u.user === targetUser);
+    
+    if (userIdx !== -1) {
+        db.users[userIdx].status = 'active';
+        writeDB(db);
         res.json({ success: true });
-    } else {
-        res.status(404).json({ err: 'User not found' });
     }
 });
 
-// Ban a student
-app.post('/api/admin/ban', (req, res) => {
-    const { targetUser } = req.body;
-    if (!db.banned.includes(targetUser)) db.banned.push(targetUser);
-    save();
-    res.json({ success: true });
-});
-
-// ==========================================
-// 3. THE FEED (Social Side)
-// ==========================================
-
-app.get('/api/posts', (req, res) => {
-    res.json(db.posts.slice().reverse()); // Newest first
-});
-
-app.post('/api/posts', (req, res) => {
-    const { author, content } = req.body;
-    const post = {
-        id: Date.now(),
-        author,
-        content,
-        date: new Date(),
-        likes: 0
+// 5. INBOX API (Telegram/Insta Style Data)
+app.get('/api/inbox', (req, res) => {
+    const { type } = req.query;
+    // For now, returning static data to match your new Inbox design
+    const mockData = {
+        chats: [{ sender: "سارة", text: "هل أكملت ملخص الإيكولوجيا؟", time: "12:45" }],
+        channels: [{ sender: "COUS News", text: "تحديث مواقيت النقل", time: "10:00" }],
+        requests: []
     };
-    db.posts.push(post);
-    save();
-    res.json(post);
+    res.json(mockData[type] || []);
 });
 
-// ==========================================
-// 4. KEEP-ALIVE (Anti-Sleep for Render)
-// ==========================================
-
-setInterval(() => {
-    // Replace with your actual Render URL
-    const appUrl = 'https://' + process.env.RENDER_EXTERNAL_HOSTNAME;
-    if (process.env.RENDER_EXTERNAL_HOSTNAME) {
-        https.get(appUrl, (res) => {
-            console.log("Self-Ping: " + res.statusCode);
-        });
-    }
-}, 840000); // Pings every 14 minutes
-
-// --- START SERVER ---
-const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`🚀 Kulliya Engine Active on Port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
