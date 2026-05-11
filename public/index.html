@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>كلية — تسجيل الدخول</title>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Space+Mono&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0a0a08;
+      --bg2: #0e0e0b;
+      --gold: #c9a84c;
+      --cream: #f5f0e8;
+      --border: rgba(201, 168, 76, 0.15);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--cream);
+      font-family: 'Amiri', serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .auth-container {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      width: 100%;
+      max-width: 400px;
+      padding: 40px 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    h2 { color: var(--gold); margin-bottom: 25px; text-align: center; font-size: 1.8rem; }
+
+    .input-group { margin-bottom: 15px; }
+    label { display: block; font-size: 0.9rem; margin-bottom: 5px; color: #888; }
+    input {
+      width: 100%;
+      padding: 12px;
+      background: #000;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #fff;
+      font-family: 'Space Mono', monospace;
+      outline: none;
+      text-align: center;
+    }
+    input:focus { border-color: var(--gold); }
+
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: var(--gold);
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+      font-size: 1rem;
+    }
+
+    .step { display: none; }
+    .step.active { display: block; animation: fadeIn 0.4s ease; }
+
+    .toggle-link {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.85rem;
+      color: #666;
+    }
+    .toggle-link span { color: var(--gold); cursor: pointer; text-decoration: underline; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+
+<div class="auth-container">
+    <div id="loginStep" class="step active">
+        <h2>تسجيل الدخول</h2>
+        <div class="input-group">
+            <label>اسم المستخدم</label>
+            <input type="text" id="lUser" placeholder="username">
+        </div>
+        <div class="input-group">
+            <label>كلمة السر</label>
+            <input type="password" id="lPass" placeholder="••••••••">
+        </div>
+        <button class="btn-primary" onclick="login()">دخول</button>
+        <div class="toggle-link">ليس لديك حساب؟ <span onclick="showStep('regStep1')">إنشاء حساب جديد</span></div>
+    </div>
+
+    <div id="regStep1" class="step">
+        <h2>التحقق من الهوية</h2>
+        <p style="font-size: 0.8rem; color: #888; margin-bottom: 20px; text-align: center;">بيانات الطالب المسجلة في الجامعة</p>
+        <div class="input-group">
+            <label>رقم بطاقة الطالب</label>
+            <input type="text" id="rCard" placeholder="00000000">
+        </div>
+        <div class="input-group">
+            <label>سنة البكالوريا / المعدل</label>
+            <input type="text" id="rBac" placeholder="2024 / 14.20">
+        </div>
+        <button class="btn-primary" onclick="showStep('regStep2')">التالي</button>
+        <div class="toggle-link"><span onclick="showStep('loginStep')">العودة للدخول</span></div>
+    </div>
+
+    <div id="regStep2" class="step">
+        <h2>إكمال الحساب</h2>
+        <div class="input-group">
+            <label>الاسم الكامل</label>
+            <input type="text" id="rName" placeholder="الاسم واللقب">
+        </div>
+        <div class="input-group">
+            <label>اسم المستخدم (EN)</label>
+            <input type="text" id="rUser" placeholder="username_dz">
+        </div>
+        <div class="input-group">
+            <label>كلمة السر</label>
+            <input type="password" id="rPass" placeholder="••••••••">
+        </div>
+        <button class="btn-primary" onclick="register()">إرسال للتفعيل</button>
+    </div>
+</div>
+
+<script>
+    function showStep(stepId) {
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        document.getElementById(stepId).classList.add('active');
+    }
+
+    async function login() {
+        const user = document.getElementById('lUser').value;
+        const pass = document.getElementById('lPass').value;
+
+        const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user, pass })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            localStorage.setItem('userData', JSON.stringify(data.user));
+            window.location.href = 'feed.html';
+        } else {
+            alert(data.err);
+        }
+    }
+
+    async function register() {
+        const payload = {
+            user: document.getElementById('rUser').value,
+            pass: document.getElementById('rPass').value,
+            name: document.getElementById('rName').value,
+            info: {
+                card: document.getElementById('rCard').value,
+                bac: document.getElementById('rBac').value
+            }
+        };
+
+        const res = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            alert("تم إرسال طلبك! يرجى الانتظار حتى يقوم الأدمن بمراجعة وتفعيل حسابك.");
+            showStep('loginStep');
+        } else {
+            const data = await res.json();
+            alert(data.err);
+        }
+    }
+</script>
+
+</body>
+</html>
