@@ -3,138 +3,158 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>كلية — Feed</title>
+  <title>لوحة التحكم — Owner</title>
   <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Space+Mono&display=swap" rel="stylesheet">
   <style>
-    :root { --bg: #0a0a08; --bg2: #0e0e0b; --gold: #c9a84c; --border: rgba(201,168,76,0.15); --cream: #f5f0e8; }
-    body { background: var(--bg); color: var(--cream); font-family: 'Amiri', serif; margin: 0; padding-bottom: 80px; }
+    :root { --sidebar-w: 260px; --bg: #050505; --bg2: #0e0e0b; --gold: #c9a84c; --border: rgba(201,168,76,0.15); }
+    * { box-sizing: border-box; }
+    body { background: var(--bg); color: #fff; font-family: 'Amiri', serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
 
-    /* Top Nav - Instagram Style */
-    .header-main { 
-      display: flex; justify-content: space-between; align-items: center; 
-      padding: 15px 20px; background: var(--bg2); border-bottom: 1px solid var(--border);
-      position: sticky; top: 0; z-index: 1000;
-    }
-    .brand { font-size: 1.6rem; font-weight: bold; color: var(--gold); text-decoration: none; }
-    .inbox-link { font-size: 1.5rem; text-decoration: none; position: relative; }
-
-    /* Categories Tab */
-    .tabs { display: flex; background: var(--bg); border-bottom: 1px solid var(--border); }
-    .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; font-size: 0.9rem; color: #666; transition: 0.3s; }
-    .tab.active { color: var(--gold); border-bottom: 2px solid var(--gold); background: rgba(201,168,76,0.02); }
-
-    /* Floating Post Button (FAB) */
-    .fab-plus {
-      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-      background: var(--gold); width: 60px; height: 60px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 2.2rem; color: #000; border: none; cursor: pointer;
-      box-shadow: 0 4px 20px rgba(201,168,76,0.4); z-index: 1001;
-    }
-
-    /* Post Styling */
-    .post { padding: 20px; border-bottom: 1px solid var(--border); background: var(--bg2); margin-bottom: 1px; }
-    .post-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-    .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: #1a1a17; border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--gold); }
-    .verified-badge { color: #42a5f5; font-size: 0.8rem; margin-right: 4px; }
+    /* Sidebar Navigation */
+    .sidebar { width: var(--sidebar-w); background: var(--bg2); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px; }
+    .sidebar-header { font-size: 1.5rem; font-weight: bold; color: var(--gold); margin-bottom: 40px; text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+    .nav-item { padding: 12px 15px; border-radius: 8px; cursor: pointer; color: #888; transition: 0.3s; margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-item:hover, .nav-item.active { background: rgba(201,168,76,0.1); color: var(--gold); }
     
-    /* Post Modal */
-    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
-    .modal.active { display: flex; }
-    .modal-box { background: var(--bg2); width: 100%; max-width: 500px; border-radius: 15px; border: 1px solid var(--border); padding: 20px; }
-    textarea { width: 100%; height: 150px; background: transparent; border: none; color: #fff; font-size: 1.1rem; resize: none; outline: none; }
+    /* Main Content */
+    .main-view { flex: 1; overflow-y: auto; padding: 40px; }
+    .view-title { font-size: 1.8rem; margin-bottom: 30px; color: var(--gold); display: flex; justify-content: space-between; align-items: center; }
+
+    /* Bus Control Cards */
+    .bus-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+    .bus-card { background: var(--bg2); padding: 20px; border: 1px solid var(--border); border-radius: 12px; }
+    .bus-card input { background: #000; border: 1px solid #333; color: var(--gold); padding: 8px; border-radius: 5px; width: 100px; font-family: 'Space Mono'; }
+
+    /* Tables & Buttons */
+    table { width: 100%; border-collapse: collapse; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; }
+    th { text-align: right; padding: 15px; background: #111; color: var(--gold); font-size: 0.8rem; }
+    td { padding: 15px; border-bottom: 1px solid #1a1a17; }
     
+    .btn-action { padding: 6px 12px; border: none; border-radius: 5px; cursor: pointer; font-family: 'Amiri'; font-weight: bold; }
+    .btn-verify { background: #1e3a5f; color: #42a5f5; margin-left: 5px; }
+    .btn-ban { background: #4d1b1b; color: #ff4444; }
+    .btn-save { background: var(--gold); color: #000; margin-top: 10px; width: 100%; }
+
     .hidden { display: none; }
   </style>
 </head>
 <body>
 
-<div class="header-main">
-  <a href="#" class="brand">كلية</a>
-  <a href="inbox.html" class="inbox-link">✉️</a>
+<div class="sidebar">
+  <div class="sidebar-header">Owner Mode</div>
+  <div class="nav-item active" onclick="switchView('users', this)"><span>👥 إدارة المستخدمين</span></div>
+  <div class="nav-item" onclick="switchView('bus', this)"><span>🚌 توقيت الكوس (COUS)</span></div>
+  <div class="nav-item" onclick="switchView('posts', this)"><span>📝 الرقابة والمنشورات</span></div>
+  <div style="margin-top: auto; border-top: 1px solid var(--border); padding-top: 20px;">
+    <div class="nav-item" onclick="window.location.href='index.html'" style="color: #fff;"><span>🏠 العودة للموقع</span></div>
+  </div>
 </div>
 
-<div class="tabs">
-  <div class="tab active" onclick="switchTab('all', this)">للجميع</div>
-  <div class="tab" onclick="switchTab('uni', this)">جامعتي</div>
-  <div class="tab" onclick="switchTab('saved', this)">محفوظات</div>
-</div>
-
-<div id="feed">
+<div class="main-view">
+  <div id="view-users">
+    <div class="view-title">قائمة الطلاب</div>
+    <table>
+      <thead>
+        <tr>
+          <th>الطالب</th>
+          <th>الولاية / الجامعة</th>
+          <th>الحالة</th>
+          <th>الإجراء</th>
+        </tr>
+      </thead>
+      <tbody id="userTable"></tbody>
+    </table>
   </div>
 
-<button class="fab-plus" onclick="toggleModal(true)">+</button>
+  <div id="view-bus" class="hidden">
+    <div class="view-title">توقيت حافلات COUS حسب الولاية</div>
+    <div class="bus-grid" id="busGrid">
+      </div>
+  </div>
 
-<div class="modal" id="postModal">
-  <div class="modal-box">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-      <span style="color:var(--gold); font-weight:bold;">منشور جديد</span>
-      <button onclick="toggleModal(false)" style="background:none; border:none; color:#888; font-size:1.5rem;">×</button>
-    </div>
-    <textarea id="postInput" placeholder="ماذا يدور في ذهنك؟"></textarea>
-    <button onclick="submitPost()" style="width:100%; background:var(--gold); padding:12px; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">نشر</button>
+  <div id="view-posts" class="hidden">
+    <div class="view-title">إدارة المنشورات</div>
+    <div id="adminPosts"></div>
   </div>
 </div>
 
 <script>
-  const user = JSON.parse(localStorage.getItem('user')) || { name: 'طالب', user: 'guest' };
-
-  async function loadFeed(filter = 'all') {
-    const res = await fetch('/api/admin/data'); // Fetching all data
+  async function loadAdminData() {
+    const res = await fetch('/api/admin/data');
     const data = await res.json();
-    const feed = document.getElementById('feed');
     
-    feed.innerHTML = data.posts.map(p => `
-      <div class="post">
-        <div class="post-header">
-          <div class="user-avatar">${p.author[0]}</div>
-          <div>
-            <div style="font-weight:bold;">${p.author} ${p.isVerified ? '<span class="verified-badge">✔</span>' : ''}</div>
-            <div style="font-size:0.7rem; color:#666;">@${p.handle}</div>
-          </div>
+    // Render Users
+    document.getElementById('userTable').innerHTML = data.users.map(u => `
+      <tr>
+        <td><b>${u.name}</b> ${u.isVerified ? '✅' : ''}<br><small>@${u.user}</small></td>
+        <td>${u.wilaya} / ${u.uni}</td>
+        <td>${u.status === 'banned' ? '🚫 محظور' : '✅ نشط'}</td>
+        <td>
+          <button class="btn-action btn-verify" onclick="userAction('${u.user}', 'verify')">توثيق</button>
+          <button class="btn-action btn-ban" onclick="userAction('${u.user}', 'ban')">${u.status === 'banned' ? 'إلغاء الحظر' : 'حظر'}</button>
+        </td>
+      </tr>
+    `).join('');
+
+    // Render Bus Control
+    const wilayas = ["البليدة", "الجزائر", "تيبازة", "المدية", "بومرداس"];
+    document.getElementById('busGrid').innerHTML = wilayas.map(w => `
+      <div class="bus-card">
+        <h3 style="margin:0 0 10px 0">${w}</h3>
+        <label>وقت الوصول:</label>
+        <input type="text" id="bus-${w}" value="${data.busSchedules?.[w] || '08:00'}" placeholder="00:00">
+        <button class="btn-action btn-save" onclick="updateBus('${w}')">تحديث التوقيت</button>
+      </div>
+    `).join('');
+
+    // Render Posts
+    document.getElementById('adminPosts').innerHTML = data.posts.map(p => `
+      <div style="background:#0e0e0b; padding:15px; border:1px solid #222; margin-bottom:10px; border-radius:8px;">
+        <div style="display:flex; justify-content:space-between;">
+          <b>${p.author} (@${p.handle})</b>
+          <button class="btn-action btn-ban" onclick="deletePost(${p.id})">حذف المنشور</button>
         </div>
-        <p style="line-height:1.6; margin-bottom:15px;">${p.text}</p>
-        <div style="display:flex; gap:20px; color:var(--gold); font-size:0.9rem;">
-          <span onclick="likePost(${p.id})">❤ ${p.likes.length || 0}</span>
-          <span onclick="openComments(${p.id})">💬 ${p.comments.length || 0}</span>
-          <span onclick="savePost(${p.id})">🔖 حفظ</span>
-        </div>
+        <p style="color:#888">${p.text}</p>
       </div>
     `).join('');
   }
 
-  function toggleModal(show) {
-    document.getElementById('postModal').classList.toggle('active', show);
+  function switchView(viewId, el) {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('view-users').classList.add('hidden');
+    document.getElementById('view-bus').classList.add('hidden');
+    document.getElementById('view-posts').classList.add('hidden');
+    document.getElementById('view-' + viewId).classList.remove('hidden');
   }
 
-  async function submitPost() {
-    const text = document.getElementById('postInput').value;
-    if(!text.trim()) return;
-
-    const res = await fetch('/api/post', {
+  async function updateBus(wilaya) {
+    const time = document.getElementById(`bus-${wilaya}`).value;
+    await fetch('/api/admin/bus-update', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ 
-        text, 
-        author: user.name, 
-        userHandle: user.user 
-      })
+      body: JSON.stringify({ wilaya, time })
     });
+    alert(`تم تحديث توقيت ${wilaya}`);
+  }
 
-    if(res.ok) {
-      document.getElementById('postInput').value = '';
-      toggleModal(false);
-      loadFeed();
+  async function userAction(targetUser, action) {
+    await fetch('/api/admin/user-action', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ targetUser, action })
+    });
+    loadAdminData();
+  }
+
+  async function deletePost(id) {
+    if(confirm("حذف هذا المنشور نهائياً؟")) {
+      await fetch(`/api/admin/post/${id}`, { method: 'DELETE' });
+      loadAdminData();
     }
   }
 
-  function switchTab(type, el) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-    loadFeed(type);
-  }
-
-  window.onload = () => loadFeed('all');
+  window.onload = loadAdminData;
 </script>
 </body>
 </html>
