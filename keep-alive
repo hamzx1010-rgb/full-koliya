@@ -1,0 +1,17 @@
+const https = require('https');
+
+// Replace this URL with your actual Render app URL once it is live
+const APP_URL = 'https://full-koliya.onrender.com'; 
+
+function reloadWebsite() {
+  https.get(APP_URL, (res) => {
+    console.log(`Keep-alive ping sent: Status Code ${res.statusCode}`);
+  }).on('error', (err) => {
+    console.error(`Keep-alive error: ${err.message}`);
+  });
+}
+
+// Pings the server every 14 minutes (840,000 milliseconds)
+setInterval(reloadWebsite, 14 * 60 * 1000);
+
+console.log("Keep-alive system initialized.");
