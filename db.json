@@ -1,0 +1,17 @@
+{
+  "users": [
+    {
+      "user": "admin",
+      "pass": "owner2026",
+      "name": "مدير المنصة",
+      "role": "admin",
+      "status": "active",
+      "info": {
+        "card": "0000",
+        "bac": "2026"
+      }
+    }
+  ],
+  "posts": [],
+  "banned": []
+}
