@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>كلية — الرئيسية</title>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Scheherazade+New:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #050505;
+      --bg-elevated: #121212;
+      --gold: #c9a84c;
+      --border: rgba(255, 255, 255, 0.1);
+      --text-dim: #a8a8a8;
+      --insta-blue: #0095f6;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: #fff; font-family: 'Amiri', serif; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; }
+
+    /* --- RIGHT SIDEBAR (Navigation) --- */
+    .side-nav {
+      position: fixed; right: 0; top: 0; width: 250px; height: 100vh;
+      border-left: 1px solid var(--border); padding: 30px 20px;
+      display: flex; flex-direction: column; gap: 30px;
+    }
+    .nav-logo { font-family: 'Scheherazade New', serif; font-size: 2.4rem; color: var(--gold); margin-bottom: 10px; }
+    .nav-link { display: flex; align-items: center; gap: 15px; color: #fff; text-decoration: none; font-size: 1.15rem; transition: 0.2s; cursor: pointer; }
+    .nav-link:hover { color: var(--gold); transform: translateX(-5px); }
+
+    /* --- CENTER FEED --- */
+    main { width: 100%; max-width: 600px; margin-right: 250px; margin-left: 320px; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+    
+    .feed-tabs {
+      display: flex; border-bottom: 1px solid var(--border); position: sticky; top: 0;
+      background: rgba(5, 5, 5, 0.9); backdrop-filter: blur(15px); z-index: 10;
+    }
+    .feed-tab { flex: 1; padding: 18px; text-align: center; font-size: 0.9rem; color: var(--text-dim); cursor: pointer; font-weight: bold; }
+    .feed-tab.active { color: #fff; border-bottom: 2px solid #fff; }
+
+    .composer { padding: 25px; border-bottom: 1px solid var(--border); }
+    .avatar-sm { width: 42px; height: 42px; border-radius: 50%; background: #333; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    .composer textarea { width: 100%; background: transparent; border: none; color: #fff; font-size: 1.1rem; outline: none; resize: none; margin-top: 15px; font-family: 'Amiri'; }
+
+    .post { border-bottom: 1px solid var(--border); padding-bottom: 10px; animation: fadeIn 0.5s ease; }
+    .post-header { display: flex; align-items: center; justify-content: space-between; padding: 15px; }
+    .post-user { display: flex; align-items: center; gap: 12px; }
+    .post-content { padding: 0 15px 15px 15px; font-size: 1.1rem; line-height: 1.6; }
+
+    /* --- LEFT SIDEBAR (Widgets) --- */
+    .left-sidebar { position: fixed; left: 0; top: 0; width: 320px; height: 100vh; padding: 30px; display: flex; flex-direction: column; gap: 25px; }
+    .widget-card { background: var(--bg-elevated); border-radius: 12px; padding: 15px; border: 1px solid var(--border); }
+    .cous-timer { font-size: 1.8rem; font-weight: bold; color: var(--gold); text-align: center; margin: 10px 0; font-family: sans-serif; }
+    
+    .trending-item { margin-top: 12px; }
+    .tag-name { font-size: 0.95rem; font-weight: bold; display: block; color: var(--gold); }
+
+    /* --- BOTTOM BAR --- */
+    .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(5,5,5,0.8); backdrop-filter: blur(10px); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 15px; z-index: 100; }
+    .bottom-icon { font-size: 1.4rem; cursor: pointer; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  </style>
+</head>
+<body>
+
+<nav class="side-nav">
+  <div class="nav-logo">كلية</div>
+  <a class="nav-link" href="feed.html"><span>🏠</span> الرئيسية</a>
+  <a class="nav-link" href="chat.html"><span>💬</span> الرسائل</a>
+  <a class="nav-link" href="profile.html"><span>👤</span> الملف الشخصي</a>
+</nav>
+
+<main>
+  <div class="feed-tabs">
+    <div class="feed-tab active">للجميع</div>
+    <div class="feed-tab">تخصصي</div>
+    <div class="feed-tab">محفوظات</div>
+  </div>
+
+  <div class="composer">
+    <div style="display:flex; gap:15px; align-items:center;">
+        <div class="avatar-sm" id="myAvatar" style="background: var(--gold)">?</div>
+        <textarea id="postTxt" placeholder="ماذا يدور في ذهنك؟" rows="1"></textarea>
+    </div>
+    <div style="text-align: left; margin-top: 10px;">
+        <button onclick="publish()" style="background:var(--gold); border:none; padding:6px 20px; border-radius:18px; font-weight:bold; cursor:pointer;">نشر</button>
+    </div>
+  </div>
+
+  <div id="posts">
+      </div>
+</main>
+
+<aside class="left-sidebar">
+  <div class="widget-card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-weight:bold; font-size:0.9rem;">حافلة COUS</span>
+      <span style="color:#4ca87a; font-size:0.7rem; font-weight:bold;">نشط الآن</span>
+    </div>
+    <div class="cous-timer" id="busTimer">08:42</div>
+    <p style="font-size:0.75rem; color:var(--text-dim); text-align:center;">موعد وصول الحافلة القادمة</p>
+  </div>
+
+  <div class="widget-card" style="background:transparent; border:none;">
+    <span style="font-weight:bold; color: var(--text-dim);">الأكثر تداولاً</span>
+    <div class="trending-item"><span class="tag-name">#USTHB</span><span style="font-size:0.7rem; color:#666;">5.4K منشور</span></div>
+    <div class="trending-item"><span class="tag-name">#Ecology_DZ</span><span style="font-size:0.7rem; color:#666;">1.2K منشور</span></div>
+  </div>
+</aside>
+
+<div class="bottom-bar">
+    <div class="bottom-icon">🔍</div>
+    <div class="bottom-icon">🔔</div>
+    <div class="bottom-icon" style="color:var(--gold)">➕</div>
+    <div class="bottom-icon">👥</div>
+</div>
+
+<script>
+  const user = JSON.parse(localStorage.getItem('userData'));
+  if (!user) window.location.href = 'index.html';
+
+  document.getElementById('myAvatar').innerText = user.name[0];
+
+  async function loadFeed() {
+    const res = await fetch('/api/posts');
+    const posts = await res.json();
+    const container = document.getElementById('posts');
+    container.innerHTML = posts.map(p => `
+      <div class="post">
+        <div class="post-header">
+          <div class="post-user">
+            <div class="avatar-sm" style="background:#444">${p.author[0]}</div>
+            <div><b>${p.author} <span style="color:var(--insta-blue)">✓</span></b><br><span>USTHB · منذ قليل</span></div>
+          </div>
+        </div>
+        <div class="post-content">${p.content}</div>
+        <div style="display:flex; gap:20px; padding:0 15px; font-size:1.3rem;"><span>♥</span> <span>💬</span> <span>↗</span></div>
+      </div>
+    `).join('');
+  }
+
+  async function publish() {
+    const text = document.getElementById('postTxt').value;
+    if(!text.trim()) return;
+
+    await fetch('/api/posts', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ author: user.name, content: text })
+    });
+
+    document.getElementById('postTxt').value = '';
+    loadFeed();
+  }
+
+  // Bus Timer logic
+  setInterval(() => {
+    const timer = document.getElementById('busTimer');
+    let [m, s] = timer.innerText.split(':').map(Number);
+    if (s === 0) { m = m === 0 ? 15 : m - 1; s = 59; } else { s--; }
+    timer.innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }, 1000);
+
+  loadFeed();
+</script>
+</body>
+</html>
